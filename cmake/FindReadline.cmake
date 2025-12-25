@@ -17,7 +17,7 @@
 message(CHECK_START "Finding Readline")
 
 if(TARGET Readline::Readline)
-	message(CHECK_PASS "Found existing CMake target, skipping.")
+	message(CHECK_PASS "Found existing CMake target, skipping")
 	set(PARENT_SCOPE Readline_FOUND 1)
 	return()
 endif()

@@ -38,7 +38,7 @@ extern "C" void add_history(char *);
 #include <SilikegoCore/FunctionCaller.h>
 #include <SilikegoCore/InfixParser.h>
 
-#include "StringSource.h"
+#include <SilikegoCore/StringSource.h>
 
 int main(int argc, char *argv[])
 {
@@ -57,8 +57,8 @@ int main(int argc, char *argv[])
 	}
 
 	Silikego::FunctionCaller caller;
-	caller.InstallOperators();
-	caller.InstallFunctions();
+	Silikego::InstallOperators(caller);
+	Silikego::InstallFunctions(caller);
 
 	char *expression = NULL;
 	char *old_expression = NULL;
@@ -80,44 +80,49 @@ int main(int argc, char *argv[])
 		old_expression = expression;
 
 		Silikego::SyntaxTreeNode Tree
-			= Silikego::ParseInfix(std::unique_ptr<Silikego::DataSource>(new StringSource(expression)));
-		Silikego::Value result = Tree.Evaluate(caller);
+			= Silikego::ParseInfix(std::unique_ptr<Silikego::DataSource>(new Silikego::StringSource(expression)));
+		Silikego::Value result = Tree.evaluate(caller);
 
-		switch (result.Status())
+		switch (result.status())
 		{
-		case Silikego::ValueStatus::INTEGER:
-			std::cout << result.Integer() << std::endl;
+		case Silikego::ValueStatus::Integer:
+			std::cout << result.toInteger() << std::endl;
 			break;
-		case Silikego::ValueStatus::FLOAT:
-			std::cout << result.Float() << std::endl;
+		case Silikego::ValueStatus::Real:
+			std::cout << result.toReal() << std::endl;
 			break;
-		case Silikego::ValueStatus::MEMORY_ERR:
-			std::cout << "Error: Out of memory\n";
-			break;
-		case Silikego::ValueStatus::SYNTAX_ERR:
-			std::cout << "Error: Syntax error\n";
-			break;
-		case Silikego::ValueStatus::ZERO_DIV_ERR:
-			std::cout << "Error: Division by zero\n";
-			break;
-		case Silikego::ValueStatus::BAD_FUNCTION:
-			std::cout << "Error: Function not found\n";
-			break;
-		case Silikego::ValueStatus::BAD_ARGUMENTS:
-			std::cout << "Error: Bad argument count\n";
-			break;
-		case Silikego::ValueStatus::DOMAIN_ERR:
-			std::cout << "Error: Domain error\n";
-			break;
-		case Silikego::ValueStatus::RANGE_ERR:
-			std::cout << "Error: Range error\n";
+		case Silikego::ValueStatus::Error:
+			switch(result.toError())
+			{
+			case Silikego::Error::Memory:
+				std::cout << "Error: Out of memory\n";
+				break;
+			case Silikego::Error::Syntax:
+				std::cout << "Error: Syntax error\n";
+				break;
+			case Silikego::Error::ZeroDivision:
+				std::cout << "Error: Division by zero\n";
+				break;
+			case Silikego::Error::FunctionName:
+				std::cout << "Error: Function not found\n";
+				break;
+			case Silikego::Error::FunctionArguments:
+				std::cout << "Error: Bad argument count\n";
+				break;
+			case Silikego::Error::Domain:
+				std::cout << "Error: Domain error\n";
+				break;
+			case Silikego::Error::Range:
+				std::cout << "Error: Range error\n";
+				break;
+			default:
+				std::cout << "Unnexpected error\n";
+				break;
+			}
 		}
 	}
 
 	if (ISATTY())
-	{
-		fputc('\n', stdout);
-		fflush(stdout);
-	}
+		std::cout << std::endl;
 	return 0;
 }
